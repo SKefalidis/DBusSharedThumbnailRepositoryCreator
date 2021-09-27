@@ -15,11 +15,20 @@
 directory=$1
 if [ ! -e $directory ]; then
     echo "Directory not found"
-    exit 2
+    exit 1
 fi
 
-if [ -z "$XDG_CACHE_HOME" ]
-then
+if [ ! "python3 --version &> /dev/null" ]; then
+	echo "python3 not found"
+	exit 2
+fi
+
+if [ ! "realpath --version &> /dev/null" ]; then
+	echo "realpath not found"
+	exit 3
+fi
+
+if [ -z "$XDG_CACHE_HOME" ]; then
 	localThumbnailsRepo="$HOME/.cache/"
 else
 	localThumbnailsRepo="$XDG_CACHE_HOME/"
@@ -72,8 +81,7 @@ for file in $(find $directory -name "*.jpg" -o -name "*.jpeg" -o -name "*.png");
 			eval $cmd
 		fi
 		# 2. Wait until the thumbnail is created.
-		while [ ! -e $normal ]
-		do
+		while [ ! -e $normal ]; do
 			# echo "sleep1 $normal"
 			$(sleep 0.05)
 		done
@@ -91,8 +99,7 @@ for file in $(find $directory -name "*.jpg" -o -name "*.jpeg" -o -name "*.png");
 			cmd="dbus-send --session --print-reply --dest=org.freedesktop.thumbnails.Thumbnailer1 /org/freedesktop/thumbnails/Thumbnailer1 org.freedesktop.thumbnails.Thumbnailer1.Queue array:string:\"$fakeUri\" array:string:\"image/png\" string:\"large\" string:\"default\" uint32:0"
 			eval $cmd
 		fi
-		while [ ! -e $large ]
-		do
+		while [ ! -e $large ]; do
 			# echo "sleep2"
 			$(sleep 0.05)
 		done
