@@ -10,7 +10,7 @@ e.g. `./sharedx.sh ~/Pictures`
 
 ## Dependencies
 - realpath
-- python3 installed as python3
+- python3
 
 ## Further information:
 - https://specifications.freedesktop.org/thumbnail-spec/thumbnail-spec-latest.html#SHARED
