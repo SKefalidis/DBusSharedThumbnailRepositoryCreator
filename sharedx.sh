@@ -33,9 +33,15 @@ localLargeFolder="${localThumbnailsRepo}large/"
 IFS=$'\n'
 
 # recursively create shared thumbnail repositories
-for file in $(find $directory -name "*.jpg"); do # TODO: Support more filetypes
+for file in $(find $directory -name "*.jpg" -o -name "*.jpeg" -o -name "*.png"); do # TODO: Support more filetypes
 	filePath=$(realpath "$file")
 	fileDir=$(dirname "$filePath")
+
+	# skip existing shared thumbnails
+	#
+	if [[ $fileDir == *".sh_thumbnails"* ]]; then
+		continue
+	fi
 
 	# used request the creation of a local thumbnail
 	#
