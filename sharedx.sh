@@ -7,6 +7,11 @@
 # combos might require some small changes regarding the exact form of the paths/uris given but 
 # the main logic should be the same 
 
+# Prerequisites
+# - python3
+# - realpath
+# - a Thumbnailer that works as described in the Thumbnail management DBus specification
+
 directory=$1
 if [ ! -e $directory ]; then
     echo "Directory not found"
