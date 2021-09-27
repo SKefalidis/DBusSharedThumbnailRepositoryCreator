@@ -1,7 +1,5 @@
 # DBusSharedThumbnailRepositoryCreator
 
-Work In Progess!
-
 ## Description
 A bash script to create Shared Thumbnail Repositories using a DBus Thumbnailing service.
 
@@ -9,6 +7,10 @@ A bash script to create Shared Thumbnail Repositories using a DBus Thumbnailing 
 The script requires a single argument, the folder (as a path) for which you want the Shared Thumbnail Repository.
 
 e.g. `./sharedx.sh ~/Pictures`
+
+## Software requirements
+- realpath
+- python3 installed as python3
 
 ## Further information:
 - https://specifications.freedesktop.org/thumbnail-spec/thumbnail-spec-latest.html#SHARED
