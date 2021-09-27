@@ -8,7 +8,7 @@ The script requires a single argument, the folder (as a path) for which you want
 
 e.g. `./sharedx.sh ~/Pictures`
 
-## Software requirements
+## Dependencies
 - realpath
 - python3 installed as python3
 
