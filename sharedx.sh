@@ -6,6 +6,7 @@
 # - this script was created and tested for Thunar and Tumbler, different file-manager/thumbnailer
 # combos might require some small changes regarding the exact form of the paths/uris given but 
 # the main logic should be the same 
+# - currently the script supports local files only (only 'file://' uri prefixes)
 
 # Prerequisites
 # - python3
@@ -35,7 +36,55 @@ else
 fi
 localThumbnailsRepo+="thumbnails/"
 
+# create find-arguments from supported filetypes
+#
+args=()
+# args+=(-o -name "*.jpg")
+# args+=(-o -name "*.png")
+
+# get supported file types 
+#
+filetypes=($(dbus-send --session --print-reply --dest=org.freedesktop.thumbnails.Thumbnailer1 /org/freedesktop/thumbnails/Thumbnailer1 org.freedesktop.thumbnails.Thumbnailer1.GetSupported))
+
+# echo ${#filetypes[@]}
+let "total_entries = ${#filetypes[@]} - 8"
+let "offset = $total_entries / 2"
+
+for (( i=11; i<$offset+8; i+=2 )); do
+	# get uri type
+	type=${filetypes[i]}
+	type="${type:1:-1}"
+	if [ $type != "file" ]; then
+		continue
+	fi
+	# get mime
+	let "mime_index = $i + $offset"
+	mime=${filetypes[mime_index]}
+	mime="${mime:1:-1}"
+	# echo $mime
+	# get extensions
+	extensions="$(grep "$mime" /etc/mime.types)"
+	if [ -z "$extensions" ]; then
+		continue
+	fi
+	for ext in $extensions; do
+		if [[ $ext != *"/"* ]]; then
+			if [[ $ext != *":"* ]]; then 
+				if [[ $ext != *","* ]]; then 
+					if [[ $ext != "#" ]] && [[ $ext != "obsoleted" ]]; then 
+						# echo $ext
+						args+=(-o -name "*.$ext")
+					fi
+				fi
+			fi
+		fi
+	done
+	# echo $extensions	
+done
+unset 'args[0]'
+
 # get supported thumbnail sizes
+#
 sizes=($(dbus-send --session --print-reply --dest=org.freedesktop.thumbnails.Thumbnailer1 /org/freedesktop/thumbnails/Thumbnailer1 org.freedesktop.thumbnails.Thumbnailer1.GetFlavors))
 
 for (( i=11; i<${#sizes[@]}; i+=2 )); do
@@ -49,7 +98,7 @@ for (( i=11; i<${#sizes[@]}; i+=2 )); do
 	IFS=$'\n'
 
 	# recursively create shared thumbnail repositories
-	for file in $(find $directory -name "*.jpg" -o -name "*.jpeg" -o -name "*.png"); do # TODO: Support more filetypes
+	for file in $(find "$directory" -type f \( "${args[@]}" \) ); do
 		filePath=$(realpath "$file")
 		fileDir=$(dirname "$filePath")
 
@@ -63,9 +112,6 @@ for (( i=11; i<${#sizes[@]}; i+=2 )); do
 		#
 		fakeUri="file://$filePath"
 		md5FakeUri=`echo -n "$fakeUri" | md5sum | cut -d" " -f1`
-
-		# FIXME: Create thumbnail using nautilus and then tumbler wont create thumbnails.... like they already exist..... even though the expected md5 is different.
-		# should I use the realUri???
 
 		# used to copy the local thumbnail to a shared repository
 		#
@@ -84,8 +130,11 @@ for (( i=11; i<${#sizes[@]}; i+=2 )); do
 		if [ ! -e $sharedNormalThumbnail ]; then
 			# 1. Request the creation of a "Normal"-size thumbnail by the dbus thumbnailer.
 			normal="${localNormalFolder}${md5FakeUri}.png"
+			file_mime=$(file -b --mime-type "$filePath")
+			# echo $file_mime
 			if [ ! -e $normal ]; then
-				cmd="dbus-send --session --print-reply --dest=org.freedesktop.thumbnails.Thumbnailer1 /org/freedesktop/thumbnails/Thumbnailer1 org.freedesktop.thumbnails.Thumbnailer1.Queue array:string:\"$fakeUri\" array:string:\"image/png\" string:\"$size\" string:\"default\" uint32:0"
+				cmd="dbus-send --session --print-reply --dest=org.freedesktop.thumbnails.Thumbnailer1 /org/freedesktop/thumbnails/Thumbnailer1 org.freedesktop.thumbnails.Thumbnailer1.Queue array:string:\"$fakeUri\" array:string:\"$file_mime\" string:\"$size\" string:\"default\" uint32:0"
+				# echo $cmd
 				eval $cmd
 			fi
 			# 2. Wait until the thumbnail is created.
